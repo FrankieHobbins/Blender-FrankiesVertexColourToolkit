@@ -213,7 +213,7 @@ class FVCTK(bpy.types.Panel):
         row.prop(context.scene, "fvctk_selection")
         row = layout.row()
         row.prop(context.scene, "fvctk_world")
-        if (bpy.context.scene.fvctk_world"):
+        if (bpy.context.scene.fvctk_world):
             layout.label(text="World mode dosen't work yet", icon="ERROR")
         row = layout.row()
         row.prop(context.scene, "fvctk_rBool")
@@ -307,11 +307,11 @@ def register():
     bpy.utils.register_class(FVCTK)
     bpy.utils.register_class(ApplyVertColPicker)
     bpy.utils.register_class(ApplyVertColRGB)
-"""
+
 def unregister():
     bpy.utils.unregister_class(FVCTK)
     bpy.utils.unregister_class(ApplyVertColPicker)
     bpy.utils.unregister_class(ApplyVertColRGB)
-"""
+
 if __name__ == "__main__":
     register()
