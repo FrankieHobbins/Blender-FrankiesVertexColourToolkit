@@ -133,16 +133,16 @@ def modifyVertexColor(color):
     return()
 
 def button(mode):
-    activeObject = bpy.context.scene.objects.active
+    activeObject = bpy.context.active_object
     for ob in bpy.context.selected_objects:
         if (ob.type=="MESH"):
             if ob.data .vertex_colors:
                 vcol_layer = ob.data .vertex_colors.active
             else:
                 vcol_layer = ob.data .vertex_colors.new()
-        
+
             current_mode = bpy.context.object.mode
-            bpy.context.scene.objects.active = ob
+            bpy.context.view_layer.objects.active = ob
             bpy.context.scene.fvctk_randomColor = random.random(), random.random(), random.random()
 
             if (mode == 0): #from colour picker
@@ -168,7 +168,7 @@ def button(mode):
                 modifyVertexColor((Color((newR, newG, newB))))
 
             bpy.ops.object.mode_set(mode=current_mode)
-    bpy.context.scene.objects.active = activeObject
+    bpy.context.view_layer.objects.active = activeObject
 
 class FVCTK(bpy.types.Panel):
     """Creates a Panel in the Object properties window"""
@@ -207,7 +207,8 @@ class FVCTK(bpy.types.Panel):
         scene = context.scene
 
         row = layout.row()
-        layout.template_list("MESH_UL_uvmaps_vcols", "vcols", context.active_object.data, "vertex_colors", context.active_object.data.vertex_colors, "active_index", rows=1)
+        
+        layout.template_list("MESH_UL_vcols", "vcols", context.active_object.data, "vertex_colors", context.active_object.data.vertex_colors, "active_index", rows=1)
 
         row = layout.row()
         row.prop(context.scene, "fvctk_selection")
@@ -234,7 +235,7 @@ class FVCTK(bpy.types.Panel):
         row = layout.row()
         row.scale_y = 1.5
         row.operator("vertex_col.apply_rgb",text="modify vertex color", icon="VPAINT_HLT")
-        
+
         layout.separator() 
         layout.label(text="Assign Vertex Colour From Picker:")
         row = layout.row()
