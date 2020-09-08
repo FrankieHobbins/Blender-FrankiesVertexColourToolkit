@@ -7,8 +7,8 @@ from mathutils import Vector, Color
 bl_info = {
     "name": "Frankies Vertex Colour Toolkit",
     "author": "Frankie",
-    "version": (0,1),
-    "blender": (2, 7, 9),
+    "version": (0,2),
+    "blender": (2, 90, 0),
     "location": "View3D > Tool Panel",
     "description": "Lets you set vertex colours on objects or inside mesh",
     "warning": "",
@@ -175,7 +175,7 @@ class FVCTK(bpy.types.Panel):
     bl_label = "Frankies Vertex Color Toolkit"
     bl_idname = "OBJECT_PT_hello"
     bl_space_type = 'VIEW_3D'
-    bl_region_type = 'TOOLS'
+    bl_region_type = 'UI'
     bl_category = "F VC TK"
 
     @classmethod
@@ -183,13 +183,13 @@ class FVCTK(bpy.types.Panel):
         return context.mode in {'OBJECT', 'EDIT_MESH'}
 
     bpy.types.Scene.fvctk_selection = bpy.props.BoolProperty(name="Selected verts only", default=False)
-    bpy.types.Scene.fvctk_world = bpy.props.BoolProperty(name="World space", default=True, description="Operate on verts in world space or local space")
+    bpy.types.Scene.fvctk_world = bpy.props.BoolProperty(name="World space", default=False  , description="Operate on verts in world space or local space")
     bpy.types.Scene.fvctk_r = bpy.props.FloatProperty(name="R")
     bpy.types.Scene.fvctk_rBool = bpy.props.BoolProperty(name="R", default=True)
     bpy.types.Scene.fvctk_g = bpy.props.FloatProperty(name="G")
     bpy.types.Scene.fvctk_gBool = bpy.props.BoolProperty(name="G", default=True)
     bpy.types.Scene.fvctk_b = bpy.props.FloatProperty(name="B")
-    bpy.types.Scene.fvctk_bBool = bpy.props.BoolProperty(name="B", default=True)
+    bpy.types.Scene.fvctk_bBool = bpy.props.BoolProperty(name="B", default=True)    
     bpy.types.Scene.fvctk_mode = bpy.props.EnumProperty(name="Mode", items=[("0", "Replace", ""), ("1", "Add", ""),("2", "Subtract", ""), ("3", "Multiply", ""), ("4", "Randomise", ""), ("5", "Gradient", "")], default='0',)
     bpy.types.Scene.fvctk_gradient = bpy.props.EnumProperty(name="Gradient Axis", items=[("0", "X", ""), ("1", "Y", ""),("2", "Z", "")], default='2',)
     bpy.types.Scene.fvctk_gradientTop = bpy.props.EnumProperty(name="GradientTop", items=[("0", "Highest Vert", ""), ("1", "3d Cursor", ""),("2", "VCT", "Uses location of any object with the name VCT")], default='0',)
@@ -220,6 +220,8 @@ class FVCTK(bpy.types.Panel):
         row.prop(context.scene, "fvctk_gBool")
         row.prop(context.scene, "fvctk_bBool")
         row = layout.row()
+
+        layout.separator()
         layout.label(text="Assign Vertex Colour From Values:")
 
         row = layout.row()
@@ -231,16 +233,17 @@ class FVCTK(bpy.types.Panel):
 
         row = layout.row()
         row.scale_y = 1.5
-        row.operator("vertex_col.apply_rgb",text="modify vertex color", icon="COLOR")
+        row.operator("vertex_col.apply_rgb",text="modify vertex color", icon="VPAINT_HLT")
+        
+        layout.separator() 
         layout.label(text="Assign Vertex Colour From Picker:")
-
         row = layout.row()
         row.prop(context.scene, 'fvctk_picker', text="")
         row.prop(context.scene, "fvctk_mode")
 
         row = layout.row()
         row.scale_y = 1.5
-        row.operator("vertex_col.apply_picker", text="modify vertex color",icon="COLOR")
+        row.operator("vertex_col.apply_picker", text="modify vertex color",icon="VPAINT_HLT")
 
         layout.label(text="Misc:")
         if (bpy.context.scene.fvctk_mode=="5"): #gradient
@@ -267,7 +270,7 @@ class FVCTK(bpy.types.Panel):
             layout.label(text="Lowest Point For Gradient:")
             row = layout.row()
             row.prop(context.scene, "fvctk_gradientBottom",expand=True)
-            
+
             if (bpy.context.scene.fvctk_gradientBottom=="3"):
                 VCBfound =  False
                 for o in bpy.data.objects:
