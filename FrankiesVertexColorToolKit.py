@@ -109,9 +109,7 @@ def modifyVertexColor(color,current_mode):
     else:
         selected = [vert.index for vert in bm.verts]
     bpy.ops.object.mode_set(mode='EDIT', toggle=True)
-    print(current_mode)
     if bpy.context.tool_settings.mesh_select_mode[2] and current_mode == "EDIT":
-        print("vertex colour face mode")
         for face in me.polygons:
             if face.select == True:
                 for vert_idx, loop_idx in zip(face.vertices, face.loop_indices):
@@ -133,8 +131,7 @@ def modifyVertexColor(color,current_mode):
                     if (bpy.context.scene.fvctk_bBool == True):
                         me.vertex_colors[me.vertex_colors.active_index].data[loop_idx].color[2] = c[2]
 
-    else:
-        print("vertex colour vert mode")
+    else:    
         for face in me.polygons:
             for vert_idx, loop_idx in zip(face.vertices, face.loop_indices):
                 if vert_idx in selected:
