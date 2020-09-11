@@ -94,7 +94,7 @@ def findLowestVert():
                 return(o.location[axis])
     return(0)
 
-def modifyVertexColor(color):
+def modifyVertexColor(color,current_mode):
     me = bpy.context.active_object.data
     bm = bmesh.from_edit_mesh(me)
     gradientStart = findLowestVert()
@@ -109,27 +109,54 @@ def modifyVertexColor(color):
     else:
         selected = [vert.index for vert in bm.verts]
     bpy.ops.object.mode_set(mode='EDIT', toggle=True)
-    for face in me.polygons:
-        for vert_idx, loop_idx in zip(face.vertices, face.loop_indices):
-            if vert_idx in selected:
-                #find colour of existing vert
-                vc = me.vertex_colors[me.vertex_colors.active_index].data[loop_idx].color
-                #find extra data for gradient if in gradient mode
-                if (bpy.context.scene.fvctk_mode=="5"):
-                    vh = bpy.context.active_object.data.vertices[vert_idx].co[int(bpy.context.scene.fvctk_gradient)]
-                    if (bpy.context.scene.fvctk_world):
-                        vh += bpy.context.active_object.location[int(bpy.context.scene.fvctk_gradient)]
-                    gradient_position = ((gradientStart * -1) + vh ) / ((gradientStart * -1) + gradientEnd)
-                #work out what colour the vert will be
-                c = calculateColourValue(vc, color, bpy.context.scene.fvctk_pickerGradientStart, gradient_position)
-                #and then only apply to channels that are marked as true
-                if (bpy.context.scene.fvctk_rBool == True):
-                    me.vertex_colors[me.vertex_colors.active_index].data[loop_idx].color[0] = c[0]
-                if (bpy.context.scene.fvctk_gBool == True):
-                    me.vertex_colors[me.vertex_colors.active_index].data[loop_idx].color[1] = c[1]
-                if (bpy.context.scene.fvctk_bBool == True):
-                    me.vertex_colors[me.vertex_colors.active_index].data[loop_idx].color[2] = c[2]
-    bpy.ops.object.mode_set(mode='EDIT', toggle=True)
+    print(current_mode)
+    if bpy.context.tool_settings.mesh_select_mode[2] and current_mode == "EDIT":
+        print("vertex colour face mode")
+        for face in me.polygons:
+            if face.select == True:
+                for vert_idx, loop_idx in zip(face.vertices, face.loop_indices):
+                    #find colour of existing vert
+                    vc = me.vertex_colors[me.vertex_colors.active_index].data[loop_idx].color
+                    #find extra data for gradient if in gradient mode
+                    if (bpy.context.scene.fvctk_mode=="5"):
+                        vh = bpy.context.active_object.data.vertices[vert_idx].co[int(bpy.context.scene.fvctk_gradient)]
+                        if (bpy.context.scene.fvctk_world):
+                            vh += bpy.context.active_object.location[int(bpy.context.scene.fvctk_gradient)]
+                        gradient_position = ((gradientStart * -1) + vh ) / ((gradientStart * -1) + gradientEnd)
+                    #work out what colour the vert will be
+                    c = calculateColourValue(vc, color, bpy.context.scene.fvctk_pickerGradientStart, gradient_position)
+                    #and then only apply to channels that are marked as true
+                    if (bpy.context.scene.fvctk_rBool == True):
+                        me.vertex_colors[me.vertex_colors.active_index].data[loop_idx].color[0] = c[0]
+                    if (bpy.context.scene.fvctk_gBool == True):
+                        me.vertex_colors[me.vertex_colors.active_index].data[loop_idx].color[1] = c[1]
+                    if (bpy.context.scene.fvctk_bBool == True):
+                        me.vertex_colors[me.vertex_colors.active_index].data[loop_idx].color[2] = c[2]
+
+    else:
+        print("vertex colour vert mode")
+        for face in me.polygons:
+            for vert_idx, loop_idx in zip(face.vertices, face.loop_indices):
+                if vert_idx in selected:
+                    #find colour of existing vert
+                    vc = me.vertex_colors[me.vertex_colors.active_index].data[loop_idx].color
+                    #find extra data for gradient if in gradient mode
+                    if (bpy.context.scene.fvctk_mode=="5"):
+                        vh = bpy.context.active_object.data.vertices[vert_idx].co[int(bpy.context.scene.fvctk_gradient)]
+                        if (bpy.context.scene.fvctk_world):
+                            vh += bpy.context.active_object.location[int(bpy.context.scene.fvctk_gradient)]
+                        gradient_position = ((gradientStart * -1) + vh ) / ((gradientStart * -1) + gradientEnd)
+                    #work out what colour the vert will be
+                    c = calculateColourValue(vc, color, bpy.context.scene.fvctk_pickerGradientStart, gradient_position)
+                    #and then only apply to channels that are marked as true
+                    if (bpy.context.scene.fvctk_rBool == True):
+                        me.vertex_colors[me.vertex_colors.active_index].data[loop_idx].color[0] = c[0]
+                    if (bpy.context.scene.fvctk_gBool == True):
+                        me.vertex_colors[me.vertex_colors.active_index].data[loop_idx].color[1] = c[1]
+                    if (bpy.context.scene.fvctk_bBool == True):
+                        me.vertex_colors[me.vertex_colors.active_index].data[loop_idx].color[2] = c[2]
+
+        bpy.ops.object.mode_set(mode='EDIT', toggle=True)
     return()
 
 def button(mode):
@@ -148,7 +175,7 @@ def button(mode):
             if (mode == 0): #from colour picker
                 bpy.context.object.update_from_editmode() #maybe dont need this
                 bpy.ops.object.mode_set(mode='EDIT')
-                modifyVertexColor(bpy.context.scene.fvctk_picker)
+                modifyVertexColor(bpy.context.scene.fvctk_picker, current_mode)
 
             if (mode == 1): #from RGB floats
                 bpy.context.object.update_from_editmode() #maybe dont need this
@@ -165,7 +192,7 @@ def button(mode):
                 if (newB > 1):
                     newB /= 255
                 bpy.ops.object.mode_set(mode='EDIT')
-                modifyVertexColor((Color((newR, newG, newB))))
+                modifyVertexColor(Color((newR, newG, newB)),current_mode)
 
             bpy.ops.object.mode_set(mode=current_mode)
     bpy.context.view_layer.objects.active = activeObject
@@ -182,7 +209,7 @@ class FVCTK(bpy.types.Panel):
     def poll(cls, context):
         return context.mode in {'OBJECT', 'EDIT_MESH'}
 
-    bpy.types.Scene.fvctk_selection = bpy.props.BoolProperty(name="Selected verts only", default=False)
+    bpy.types.Scene.fvctk_selection = bpy.props.BoolProperty(name="Selected verts only", default=True)
     bpy.types.Scene.fvctk_world = bpy.props.BoolProperty(name="World space", default=False  , description="Operate on verts in world space or local space")
     bpy.types.Scene.fvctk_r = bpy.props.FloatProperty(name="R")
     bpy.types.Scene.fvctk_rBool = bpy.props.BoolProperty(name="R", default=True)
@@ -213,7 +240,7 @@ class FVCTK(bpy.types.Panel):
         row = layout.row()
         row.prop(context.scene, "fvctk_selection")
         row = layout.row()
-        row.prop(context.scene, "fvctk_world")
+        #row.prop(context.scene, "fvctk_world")
         if (bpy.context.scene.fvctk_world):
             layout.label(text="World mode dosen't work yet", icon="ERROR")
         row = layout.row()
