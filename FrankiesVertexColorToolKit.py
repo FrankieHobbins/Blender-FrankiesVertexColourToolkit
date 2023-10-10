@@ -187,9 +187,20 @@ def findLowestVert():
     return(0)
 
 
+def findColourIndex(me):
+    i = me.vertex_colors.active_index
+    try:
+        me.vertex_colors[i]
+    except:
+        print("error finding active vertex colour index, defaulting to 0")
+        i = 0
+    return i
+
+
 def modifyVertexColor(color, current_mode):
     me = bpy.context.active_object.data
     bm = bmesh.from_edit_mesh(me)
+    vc_index = findColourIndex(me)
     gradientStart = findLowestVert()
     gradientEnd = findHighestVert()
     if (bpy.context.scene.fvctk_world):
@@ -205,13 +216,13 @@ def modifyVertexColor(color, current_mode):
         selected = [vert.index for vert in bm.verts]
     bpy.ops.object.mode_set(mode='EDIT', toggle=True)
     # vert mode
-    # print(current_mode)
+    print(current_mode)
     if bpy.context.tool_settings.mesh_select_mode[2] and current_mode == "EDIT":
         for face in me.polygons:
             if face.select:
                 for vert_idx, loop_idx in zip(face.vertices, face.loop_indices):
                     # find colour of existing vert
-                    vc = me.vertex_colors[me.vertex_colors.active_index].data[loop_idx].color
+                    vc = me.vertex_colors[vc_index].data[loop_idx].color
                     # find extra data for gradient if in gradient mode
                     if (bpy.context.scene.fvctk_mode == "5" or bpy.context.scene.fvctk_mode == "6" or bpy.context.scene.fvctk_mode == "7"):
                         vh = bpy.context.active_object.data.vertices[vert_idx].co[int(bpy.context.scene.fvctk_gradient)]
@@ -219,24 +230,26 @@ def modifyVertexColor(color, current_mode):
                             vh += bpy.context.active_object.location[int(bpy.context.scene.fvctk_gradient)]
                         gradient_position = ((gradientStart * -1) + vh) / ((gradientStart * -1) + gradientEnd)
                     # work out what colour the vert will be
+                    #print(vc)
+                    #print(color)
                     c = calculateColourValue(vc, color, bpy.context.scene.fvctk_pickerGradientStart, gradient_position)
 
                     # and then only apply to channels that are marked as true
                     if (bpy.context.scene.fvctk_rBool):
-                        me.vertex_colors[me.vertex_colors.active_index].data[loop_idx].color[0] = c[0]
+                        me.vertex_colors[vc_index].data[loop_idx].color[0] = c[0]
                     if (bpy.context.scene.fvctk_gBool):
-                        me.vertex_colors[me.vertex_colors.active_index].data[loop_idx].color[1] = c[1]
+                        me.vertex_colors[vc_index].data[loop_idx].color[1] = c[1]
                     if (bpy.context.scene.fvctk_bBool):
-                        me.vertex_colors[me.vertex_colors.active_index].data[loop_idx].color[2] = c[2]
+                        me.vertex_colors[vc_index].data[loop_idx].color[2] = c[2]
                     if (bpy.context.scene.fvctk_aBool):
-                        me.vertex_colors[me.vertex_colors.active_index].data[loop_idx].color[3] = c[3]
+                        me.vertex_colors[vc_index].data[loop_idx].color[3] = c[3]
     # face mode
     else:
         for face in me.polygons:
             for vert_idx, loop_idx in zip(face.vertices, face.loop_indices):
                 if vert_idx in selected:
                     # find colour of existing vert
-                    vc = me.vertex_colors[me.vertex_colors.active_index].data[loop_idx].color
+                    vc = me.vertex_colors[vc_index].data[loop_idx].color
                     # find extra data for gradient if in gradient mode
                     if (bpy.context.scene.fvctk_mode == "5" or bpy.context.scene.fvctk_mode == "6" or bpy.context.scene.fvctk_mode == "7"):
                         vh = bpy.context.active_object.data.vertices[vert_idx].co[int(bpy.context.scene.fvctk_gradient)]
@@ -247,13 +260,14 @@ def modifyVertexColor(color, current_mode):
                     c = calculateColourValue(vc, color, bpy.context.scene.fvctk_pickerGradientStart, gradient_position)
                     # and then only apply to channels that are marked as true
                     if (bpy.context.scene.fvctk_rBool):
-                        me.vertex_colors[me.vertex_colors.active_index].data[loop_idx].color[0] = c[0]
+                        me.vertex_colors[vc_index].data[loop_idx].color[0] = c[0]
                     if (bpy.context.scene.fvctk_gBool):
-                        me.vertex_colors[me.vertex_colors.active_index].data[loop_idx].color[1] = c[1]
+                        me.vertex_colors[vc_index].data[loop_idx].color[1] = c[1]
                     if (bpy.context.scene.fvctk_bBool):
-                        me.vertex_colors[me.vertex_colors.active_index].data[loop_idx].color[2] = c[2]
+                        me.vertex_colors[vc_index].data[loop_idx].color[2] = c[2]
                     if (bpy.context.scene.fvctk_aBool):
-                        me.vertex_colors[me.vertex_colors.active_index].data[loop_idx].color[3] = c[3]
+                        me.vertex_colors[vc_index].data[loop_idx].color[3] = c[3]
+                    #print(list(c))
         bpy.ops.object.mode_set(mode='EDIT', toggle=True)
     return()
 
@@ -436,7 +450,7 @@ class FVCTK(bpy.types.Panel):
 
         row = layout.row()
 
-        layout.template_list("MESH_UL_vcols", "vcols", context.active_object.data, "vertex_colors", context.active_object.data.vertex_colors, "active_index", rows=1)
+        #layout.template_list("MESH_UL_color_attributes_selector", "vcols", context.active_object.data, "vertex_colors", context.active_object.data.vertex_colors, "active_index", rows=1)
 
         row = layout.row()
         row.prop(context.scene, "fvctk_selection")
@@ -550,7 +564,10 @@ class FVCTK(bpy.types.Panel):
             props.mode = 2
             props.value = value
             row.prop(context.scene, "fvctk_offsetList", index=i, slider=True, text=str("adjust"))
-            row = box.row()        
+            row = box.row()
+
+        layout.separator()
+        box = layout.box()
         row = box.row()
         row.prop(context.scene, 'fvctk_savedColour', text="")
         row.prop(context.scene, 'fvctk_savedColour1', text="")
